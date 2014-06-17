@@ -159,7 +159,7 @@ module Snowplow
           },
           { :input_format     => config[:etl][:collector_format],
             :etl_tstamp       => etl_tstamp,
-            :enrichments      => Base64.strict_encode(JSON.generate(build_enrichments_json(config)))
+            :enrichments      => build_enrichments_json(config)
           }
         )
         @jobflow.add_step(enrich_step)
@@ -320,6 +320,8 @@ module Snowplow
         success
       end
 
+      # Returns a base64-encoded JSON containing an array of enrichment JSONs
+      Contract ConfigHash => String
       def self.build_enrichments_json(config)
         enrichments_json_data = []
         enrichment_files = Dir.glob(config[:enrichments] + '/*.json')
@@ -327,9 +329,10 @@ module Snowplow
           enrichments_json_data.push(JSON.parse(file))
         end
         enrichments_json = {
-          :schema => 'iglu:com.snowplowanalytics.snowplow/enrichments/jsonschema/1-0-0',
-          :data   => enrichments_json_data
+          'schema' => 'iglu:com.snowplowanalytics.snowplow/enrichments/jsonschema/1-0-0',
+          'data'   => enrichments_json_data
         }
+        Base64.strict_encode(JSON.generate(enrichments_json))
       end
 
       Contract IgluConfigHash => String
