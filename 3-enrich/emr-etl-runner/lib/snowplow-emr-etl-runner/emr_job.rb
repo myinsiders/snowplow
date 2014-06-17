@@ -160,7 +160,7 @@ module Snowplow
           { :input_format     => config[:etl][:collector_format],
             :etl_tstamp       => etl_tstamp,
             :maxmind_file     => assets[:maxmind],
-            :anon_ip_octets   => self.class.get_anon_ip_octets(config[:enrichments][:anon_ip])
+            :anon_ip_octets   => config[:enrichments][:anon_ip]
           }
         )
         @jobflow.add_step(enrich_step)
@@ -321,18 +321,22 @@ module Snowplow
         success
       end
 
+      def self.build_enrichments_json(config)
+        enrichments_json_data = []
+        enrichment_files = Dir.glob(config[:enrichments] + '/*.json')
+        for file in enrichment_files do
+          enrichments_json_data.push(JSON.parse(file))
+        end
+        enrichments_json = {
+          :schema => 'iglu:com.snowplowanalytics.snowplow/enrichments/jsonschema/1-0-0',
+          :data   => enrichments_json_data
+        }
+
+      end
+
       Contract IgluConfigHash => String
       def self.jsonify(iglu_hash)
         Base64.strict_encode(iglu_hash.to_camelback_keys.to_json)
-      end
-
-      Contract AnonIpHash => String
-      def self.get_anon_ip_octets(anon_ip)
-        if anon_ip[:enabled]
-          anon_ip[:anon_octets].to_s
-        else
-          '0' # Anonymize 0 octets == anonymization disabled
-        end
       end
 
       Contract String, String, String => AssetsHash
