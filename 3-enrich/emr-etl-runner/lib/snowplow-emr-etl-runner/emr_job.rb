@@ -159,8 +159,7 @@ module Snowplow
           },
           { :input_format     => config[:etl][:collector_format],
             :etl_tstamp       => etl_tstamp,
-            :maxmind_file     => assets[:maxmind],
-            :anon_ip_octets   => config[:enrichments][:anon_ip]
+            :enrichments      => Base64.strict_encode(JSON.generate(build_enrichments_json(config)))
           }
         )
         @jobflow.add_step(enrich_step)
@@ -331,7 +330,6 @@ module Snowplow
           :schema => 'iglu:com.snowplowanalytics.snowplow/enrichments/jsonschema/1-0-0',
           :data   => enrichments_json_data
         }
-
       end
 
       Contract IgluConfigHash => String
@@ -341,15 +339,7 @@ module Snowplow
 
       Contract String, String, String => AssetsHash
       def self.get_assets(assets_bucket, hadoop_enrich_version, hadoop_shred_version)
-
-        asset_host = 
-          if assets_bucket == "s3://snowplow-hosted-assets/"
-            "http://snowplow-hosted-assets.s3.amazonaws.com/" # Use the public S3 URL
-          else
-            assets_bucket
-          end
-
-        { :maxmind  => "#{asset_host}third-party/maxmind/GeoLiteCity.dat",
+        {
           :enrich   => "#{assets_bucket}3-enrich/hadoop-etl/snowplow-hadoop-etl-#{hadoop_enrich_version}.jar",
           :shred    => "#{assets_bucket}3-enrich/scala-hadoop-shred/snowplow-hadoop-shred-#{hadoop_shred_version}.jar",
         }
