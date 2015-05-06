@@ -12,20 +12,16 @@
 # See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 
 # Update these for your environment
-rvm_path=/path/to/.rvm # Typically in the $HOME of the user who installed RVM
-RUNNER_PATH=/path/to/snowplow/3-enrich/emr-etl-runner
-LOADER_PATH=/path/to/snowplow/4-storage/storage-loader
-RUNNER_CONFIG=/path/to/your-runner-config.yml
-RUNNER_ENRICHMENTS=/path/to/your/enrichment-jsons
-LOADER_CONFIG=/path/to/your-loader-config.yml
-
-# Load the RVM environment
-export PATH=$PATH:${rvm_path}/bin
-source ${rvm_path}/scripts/rvm
+RUNNER_PATH=/home/ubuntu/snowplow/3-enrich/emr-etl-runner
+LOADER_PATH=/home/ubuntu/snowplow/4-storage/storage-loader
+RUNNER_CONFIG=/home/ubuntu/snowplow/3-enrich/emr-etl-runner/config/config.yml
+RUNNER_ENRICHMENTS=/home/ubuntu/snowplow/3-enrich/emr-etl-runner/config/enrichments
+LOADER_CONFIG=/home/ubuntu/snowplow/4-storage/storage-loader/config/redshift.yml
+which rvm || source /etc/profile.d/rvm.sh
 
 # Run the ETL job on EMR
 export BUNDLE_GEMFILE=${RUNNER_PATH}/Gemfile
-bundle exec ${RUNNER_PATH}/bin/snowplow-emr-etl-runner --config ${RUNNER_CONFIG} --enrichments ${RUNNER_ENRICHMENTS}
+bundle exec ${RUNNER_PATH}/bin/snowplow-emr-etl-runner --config ${RUNNER_CONFIG} --enrichments ${RUNNER_ENRICHMENTS} $*
 
 # Check the damage
 ret_val=$?
