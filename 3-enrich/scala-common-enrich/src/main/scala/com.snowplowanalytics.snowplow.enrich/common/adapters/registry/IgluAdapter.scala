@@ -88,7 +88,7 @@ object IgluAdapter extends Adapter {
     }
     catch {
       case NullPointerException => {
-        println("Invalid payloa: " + payload.toString)
+        println("Invalid payload: " + payload.toString)
         ("Invalid payload: " + payload.toString).failNel
       }
     }

@@ -475,7 +475,7 @@ module Snowplow
         {
           # :enrich   => "#{assets_bucket}3-enrich/hadoop-etl/snowplow-hadoop-etl-#{hadoop_enrich_version}.jar",
           # Digdeep custom EMR implementation
-          :enrich   => "s3://digdeep-snowplow-hosted-assets/emr/snowplow-hadoop-etl-0.12.0.jar",
+          :enrich   => "s3://digdeep-snowplow-hosted-assets/emr/snowplow-hadoop-etl-0.12.0_1.jar",
           :shred    => "#{assets_bucket}3-enrich/scala-hadoop-shred/snowplow-hadoop-shred-#{hadoop_shred_version}.jar",
         }
       end

@@ -165,6 +165,8 @@ class EtlJob(args: Args) extends Job(args) {
     case None => input
   }
 
+  println("Denis version started")
+
   // Scalding data pipeline
   // TODO: let's fix this Any typing
   val common = trappableInput

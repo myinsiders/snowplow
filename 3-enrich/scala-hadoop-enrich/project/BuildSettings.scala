@@ -16,6 +16,8 @@ import sbt._
 import Keys._
 
 object BuildSettings {
+  import sbtassembly.Plugin._
+  import AssemblyKeys._
 
   // Basic settings for our app
   lazy val basicSettings = Seq[Setting[_]](
@@ -53,6 +55,7 @@ object BuildSettings {
     jarName in assembly := {
       name.value + "-" + version.value + ".jar"
     },
+    mainClass in assembly := Some("com.snowplowanalytics.snowplow.enrich.hadoop.JobRunner"),
 
     // Drop these jars
     excludedJars in assembly <<= (fullClasspath in assembly) map { cp =>
