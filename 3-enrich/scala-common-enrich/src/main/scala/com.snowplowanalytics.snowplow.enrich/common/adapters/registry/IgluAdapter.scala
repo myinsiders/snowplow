@@ -65,24 +65,30 @@ object IgluAdapter extends Adapter {
    */
   def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents = {
 
-    val params = toMap(payload.querystring)
-    if (params.isEmpty) {
-      "Querystring is empty: no Iglu-compatible event to process".failNel
-    } else {
-      params.get("schema") match {
-        case None => "Querystring does not contain schema parameter: not an Iglu-compatible self-describing event".failNel
-        case Some(schemaUri) => SchemaKey.parse(schemaUri) match {
-          case Failure(procMsg) => procMsg.getMessage.failNel
-          case Success(_)       =>
-            NonEmptyList(RawEvent(
-              api          = payload.api,
-              parameters   = toUnstructEventParams(TrackerVersion, (params - "schema"), schemaUri, IgluFormatter, "app"),
-              contentType  = payload.contentType,
-              source       = payload.source,
-              context      = payload.context
+    try {
+      val params = toMap(payload.querystring)
+      if (params.isEmpty) {
+        "Querystring is empty: no Iglu-compatible event to process".failNel
+      } else {
+        params.get("schema") match {
+          case None => "Querystring does not contain schema parameter: not an Iglu-compatible self-describing event".failNel
+          case Some(schemaUri) => SchemaKey.parse(schemaUri) match {
+            case Failure(procMsg) => procMsg.getMessage.failNel
+            case Success(_) =>
+              NonEmptyList(RawEvent(
+                api = payload.api,
+                parameters = toUnstructEventParams(TrackerVersion, (params - "schema"), schemaUri, IgluFormatter, "app"),
+                contentType = payload.contentType,
+                source = payload.source,
+                context = payload.context
               )).success
+          }
         }
       }
+    }
+    catch {
+      case NullPointerException =>
+        ("Invalid payload: " + payload.toString).failNel
     }
   }
 }
