@@ -473,7 +473,9 @@ module Snowplow
       Contract String, String, String => AssetsHash
       def self.get_assets(assets_bucket, hadoop_enrich_version, hadoop_shred_version)
         {
-          :enrich   => "#{assets_bucket}3-enrich/hadoop-etl/snowplow-hadoop-etl-#{hadoop_enrich_version}.jar",
+          # :enrich   => "#{assets_bucket}3-enrich/hadoop-etl/snowplow-hadoop-etl-#{hadoop_enrich_version}.jar",
+          # Digdeep custom EMR implementation
+          :enrich   => "digdeep-snowplow-hosted-assets/emr/snowplow-hadoop-etl-0.12.0.jar",
           :shred    => "#{assets_bucket}3-enrich/scala-hadoop-shred/snowplow-hadoop-shred-#{hadoop_shred_version}.jar",
         }
       end
