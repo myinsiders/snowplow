@@ -64,9 +64,8 @@ object IgluAdapter extends Adapter {
    *         Success, or a NEL of Failure Strings
    */
   def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents = {
-
     try {
-      val params = toMap(payload.querystring)
+      val params = toMap(payload.querystring).filter{case (key, value) => key != null && value != null }
       if (params.isEmpty) {
         "Querystring is empty: no Iglu-compatible event to process".failNel
       } else {
@@ -87,10 +86,10 @@ object IgluAdapter extends Adapter {
       }
     }
     catch {
-      case NullPointerException => {
-        println("Invalid payload: " + payload.toString)
-        ("Invalid payload: " + payload.toString).failNel
-      }
+      case e:NullPointerException =>
+        ("Invalid payload: " + payload.querystring).failNel
+      case ia:IllegalArgumentException =>
+        s"IllegalArgumentException ${ia.getMessage} for payload ${payload.querystring}".failNel
     }
   }
 }

@@ -256,6 +256,10 @@ object JsonUtils {
    */
   def encodeJsonObject(enc: String, json: JValue): JValue =
     json transformField {
-      case (key, JString(value)) => (CU.encodeString(enc, key), JString(CU.encodeString(enc, value)))
+      case (key, JString(value)) => {
+        if (key == null) throw new IllegalArgumentException(s"Key for value $value is null")
+        if (value == null) throw new IllegalArgumentException(s"Value for key $key is null")
+        (CU.encodeString(enc, key), JString(CU.encodeString(enc, value)))
+      }
     }
 }

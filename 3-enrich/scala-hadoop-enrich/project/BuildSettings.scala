@@ -73,7 +73,9 @@ object BuildSettings {
       ) 
       cp filter { jar => excludes(jar.data.getName) }
     },
-    
+
+    test in assembly := {},
+
     mergeStrategy in assembly <<= (mergeStrategy in assembly) {
       (old) => {
         case x if x.endsWith("project.clj") => MergeStrategy.discard // Leiningen build files

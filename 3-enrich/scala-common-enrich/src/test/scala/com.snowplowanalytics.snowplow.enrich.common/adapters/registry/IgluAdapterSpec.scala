@@ -47,6 +47,7 @@ class IgluAdapterSpec extends Specification with DataTables with ValidationMatch
   "toRawEvents should return a Validation Failure if there are no parameters on the CloudFront querystring"                  ! e5^
   "toRawEvents should return a Validation Failure if there is no schema parameter on the CloudFront querystring"             ! e6^
   "toRawEvents should return a Validation Failure if the schema parameter is not in an Iglu-compatible format"               ! e7^
+  "toRawEvents should not throw NullPointerException for strange values"               ! e8^
                                                                                                                              end
 
   implicit val resolver = SpecHelpers.IgluResolver
@@ -230,5 +231,35 @@ class IgluAdapterSpec extends Specification with DataTables with ValidationMatch
     val actual = IgluAdapter.toRawEvents(payload)
 
     actual must beFailing(NonEmptyList("iglooooooo://blah is not a valid Iglu-format schema URI"))
+  }
+
+  def e8 = {
+    //CollectorPayload(CollectorApi(com.snowplowanalytics.iglu,v1),List(schema=iglu:com.au.digdeep/cadreon/jsonschema/1-0-0, event_type=impression,
+    // tp_user_id=4727379f-231a-4471-9b09-6804b3013f75, tp_campaign_name=AU_Industry Super_EOFY Maintenance_May-Aug 2015_INUEOF,
+    // tp_publisher_name=Cadreon AU, tp_section_name=General Interest, Predictive Targeting ,  Retargeting,
+    // tp_placement_name=Cadreon_General Interest, Predictive Targeting ,  Retargeting_728x90_Stdbnr, dd_device_id=362b8511891baeace742ea5108deca6763072c0a0402173224dcfeac0e016c05e88c6b3c58e25fb1dd2de4cf3aefde58, dd_is_mobile=false, dd_device_type=Desktop, dd_web_traffic_tor=false, dd_web_traffic_bot=false, cv=clj-0.9.1-tom-0.1.0, nuid=fc0d2afb-6b85-43f3-889c-b95121304d49),None,None,CollectorSource(clj-tomcat,UTF-8,None),CollectorContext(2015-05-29T01:33:25.000Z,Some(220.244.25.102),Some(Mozilla%2F5.0+%28Windows+NT+6.1%3B+WOW64%29+AppleWebKit%2F537.36+%28KHTML%2C+like+Gecko%29+Chrome%2F43.0.2357.81+Safari%2F537.36),Some(http://ad.doubleclick.net/N2455/adi/Global_Footer;sz=728x90;dc_ref=http%3A%2F%2Fwww.ebay.com.au;passback=pbk;ord=[timestamp]?),List(),None))
+    val params = toNameValuePairs(
+      "schema"         -> "iglu:com.au.digdeep/cadreon/jsonschema/1-0-0",
+      "event_type"           -> "impression",
+      "tp_campaign_name"           -> "AU_Industry Super_EOFY Maintenance_May-Aug 2015_INUEOF",
+      "tp_publisher_name"              -> "Cadreon AU, tp_section_name=General Interest, Predictive Targeting ,  Retargeting",
+      "tp_placement_name" -> "Cadreon_General Interest, Predictive Targeting ,  Retargeting_728x90_Stdbnr"
+    )
+    val payload = CollectorPayload(Shared.api, params, None, None, Shared.cfSource, Shared.context)
+    val actual = IgluAdapter.toRawEvents(payload)
+    println(actual)
+    val expectedJson =
+      """|{
+        |"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0",
+        |"data":{
+        |"schema":"iglu:com.acme/campaign/jsonschema/1-0-1",
+        |"data":{
+        |"user":"6353af9b-e288-4cf3-9f1c-b377a9c84dac",
+        |"name":"download"
+        |}
+        |}
+        |}""".stripMargin.replaceAll("[\n\r]","")
+
+    actual must beSuccessful(NonEmptyList(RawEvent(Shared.api, Expected.staticNoPlatform ++ Map("p" -> "mob", "ue_pr" -> expectedJson), None, Shared.cfSource, Shared.context)))
   }
 }
