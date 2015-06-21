@@ -95,6 +95,15 @@ module Snowplow
         # Move all the files of this type
         Sluice::Storage::S3::move_files(s3, good_location, archive_location, '.+')
 
+        filtered_path = config[:s3][:buckets][file_type][:filtered]
+        unless filtered_path.nil?
+          filtered_location = Sluice::Storage::S3::Location.new(filtered_path)
+          archive_location = Sluice::Storage::S3::Location.new(config[:s3][:buckets][file_type][:archive])
+
+          # Move all the files of this type
+          Sluice::Storage::S3::move_files(s3, filtered_location, archive_location, '.+')
+        end
+
         nil
       end
       module_function :archive_files_of_type
