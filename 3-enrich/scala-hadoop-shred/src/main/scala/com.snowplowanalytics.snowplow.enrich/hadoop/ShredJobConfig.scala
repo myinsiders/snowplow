@@ -45,6 +45,7 @@ case class ShredJobConfig(
     inFolder: String,
     outFolder: String,
     badFolder: String,
+    filteredFolder: String,
     exceptionsFolder: Option[String],
     igluResolver: Resolver)
 
@@ -71,6 +72,7 @@ object ShredJobConfig {
     val inFolder  = args.requiredz("input_folder")
     val outFolder = args.requiredz("output_folder")
     val badFolder = args.requiredz("bad_rows_folder")
+    val filteredFolder = args.requiredz("filtered_folder")
     val exceptionsFolder = args.optionalz("exceptions_folder")
 
     val igluResolver = args.requiredz(IgluConfigArg) match {
@@ -81,7 +83,7 @@ object ShredJobConfig {
       } yield reso
     }
 
-    (inFolder.toValidationNel |@| outFolder.toValidationNel |@| badFolder.toValidationNel |@| exceptionsFolder.toValidationNel |@| igluResolver) { ShredJobConfig(_,_,_,_,_) }
+    (inFolder.toValidationNel |@| outFolder.toValidationNel |@| badFolder.toValidationNel |@| filteredFolder.toValidationNel |@| exceptionsFolder.toValidationNel |@| igluResolver) { ShredJobConfig(_,_,_,_,_,_) }
   }
 
   /**

@@ -219,6 +219,11 @@ module Snowplow
 
           # 3. Shredding
           csbs = config[:s3][:buckets][:shredded]
+          filtered_output = if s3distcp
+                              "hdfs:///local/snowplow/shredded-filtered/"
+                            else
+                              self.class.partition_by_run(csbs[:filtered], run_id)
+                            end
           shred_final_output = self.class.partition_by_run(csbs[:good], run_id)
           shred_step_output = if s3distcp
             "hdfs:///local/snowplow/shredded-events/"
@@ -245,6 +250,7 @@ module Snowplow
             "enrich.hadoop.ShredJob",
             { :in          => enrich_step_output,
               :good        => shred_step_output,
+              :filtered    => filtered_output,
               :bad         => self.class.partition_by_run(csbs[:bad],    run_id),
               :errors      => self.class.partition_by_run(csbs[:errors], run_id, config[:etl][:continue_on_unexpected_error])
             },
@@ -270,6 +276,17 @@ module Snowplow
               "--s3Endpoint" , s3_endpoint
             ]
             copy_to_s3_step.name << ": Shredded HDFS -> S3"
+            @jobflow.add_step(copy_to_s3_step)
+
+            # Filtered
+            copy_to_s3_step = Elasticity::S3DistCpStep.new
+            copy_to_s3_step.arguments = [
+                "--src"        , "hdfs:///local/snowplow/shredded-filtered/",
+                "--dest"       , self.class.partition_by_run(csbs[:filtered], run_id),
+                "--srcPattern" , PARTFILE_REGEXP,
+                "--s3Endpoint" , s3_endpoint
+            ]
+            copy_to_s3_step.name << ": Filtered HDFS -> S3"
             @jobflow.add_step(copy_to_s3_step)
           end
         end
@@ -316,6 +333,7 @@ module Snowplow
             :input_folder      => folders[:in],
             :output_folder     => folders[:good],
             :bad_rows_folder   => folders[:bad],
+            :filtered_folder   => folders[:filtered],
             :exceptions_folder => folders[:errors]
           })
           .reject { |k, v| v.nil? } # Because folders[:errors] may be empty

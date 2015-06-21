@@ -122,16 +122,18 @@ object JobSpecHelpers {
       arg("input_folder", "inputFolder").
       arg("output_folder", "outputFolder").
       arg("bad_rows_folder", "badFolder").
+      arg("filtered_folder", "filteredFolder").
       arg("exceptions_folder", "exceptionsFolder").
       arg("iglu_config", IgluConfig)
 
   case class Sinks(
     val output:     File,
     val badRows:    File,
+    val filtered: File,
     val exceptions: File) {
 
     def deleteAll() {
-      for (f <- List(exceptions, badRows, output)) {
+      for (f <- List(exceptions, badRows, output, filtered)) {
         f.delete()
       }
     }
@@ -156,6 +158,7 @@ object JobSpecHelpers {
 
     val input      = mkTmpDir("input", createParents = true, containing = lines.some)
     val output     = mkTmpDir("output")
+    val filtered   = mkTmpDir("filtered")
     val badRows    = mkTmpDir("bad-rows")
     val exceptions = mkTmpDir("exceptions")  
 
@@ -163,6 +166,7 @@ object JobSpecHelpers {
       "--input_folder",      input.getAbsolutePath,
       "--output_folder",     output.getAbsolutePath,
       "--bad_rows_folder",   badRows.getAbsolutePath,
+      "--filtered_folder", filtered.getAbsolutePath,
       "--exceptions_folder", exceptions.getAbsolutePath,
       "--iglu_config",       IgluConfig)
 
@@ -171,7 +175,7 @@ object JobSpecHelpers {
     Tool.main(args)
     input.delete()
 
-    Sinks(output, badRows, exceptions)
+    Sinks(output, badRows, filtered, exceptions)
   }
 
 }

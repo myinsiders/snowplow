@@ -67,6 +67,10 @@ class InvalidJsonsSpec extends Specification {
           output must beEmpty
         }
       }.
+      sink[String](Tsv("filteredFolder")){ filtered =>
+      "not write any filtered" in {
+        filtered must beEmpty
+      }}.
       sink[TupleEntry](Tsv("exceptionsFolder")){ trap =>
         "not trap any exceptions" in {
           trap must beEmpty

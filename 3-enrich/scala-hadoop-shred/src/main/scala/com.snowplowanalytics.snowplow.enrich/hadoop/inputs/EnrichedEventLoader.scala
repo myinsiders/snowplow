@@ -17,6 +17,8 @@ package inputs
 // Java
 import java.util.UUID
 
+import com.fasterxml.jackson.databind.{JsonNode, ObjectMapper}
+
 // Joda-Time
 import org.joda.time.{DateTime, DateTimeZone}
 import org.joda.time.format.DateTimeFormat
@@ -42,8 +44,27 @@ import outputs.EnrichedEvent
  */
 object EnrichedEventLoader {
 
-  private val RedshiftTstampFormat = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss.SSS").withZone(DateTimeZone.UTC)
+  def main(args: Array[String]): Unit = {
+    val json = "{\n    \"schema\": \"iglu:com.snowplowanalytics.snowplow/contexts/jsonschema/1-0-0\",\n    \"data\": [\n        {\n            \"schema\": \"iglu:com.au.digdeep/page/jsonschema/2-0-0\",\n            \"data\": {\n                \"WPtemplateFile\": \"undefined\",\n                \"WPtemplateDisplay\": \"undefined\",\n                \"WPtemplateDisplayType\": \"undefined\",\n                \"WPtemplateFileId\": \"undefined\",\n                \"WPtemplateFilePath\": \"/\",\n                \"WPappId\": \"undefined\",\n                \"WPeventId\": \"undefined\"\n            }\n        }\n    ]\n}"
+    val contextsJson = Mapper.readTree(json)
+    println(contextsJson.at("/data").getClass)
+    for (index <- Range(0, contextsJson.at("/data").size)) {
+      val device_id = contextsJson.at(s"/data/$index/data/WPtemplateFile")
+      val user_id = contextsJson.at(s"/data/$index/data/augurUID")
+      (device_id.isMissingNode, user_id.isMissingNode) match {
+        case (true, _) => None
+        case (false, true) => println (device_id.asText, null)
+        case (false, false) => println (device_id.asText, user_id.asText)
+      }
+    }
+    val fields: Array[String] = Array("1","2")
+    println(fields)
+    println(fields ++ Array("c"))
+  }
 
+
+  private val RedshiftTstampFormat = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss.SSS").withZone(DateTimeZone.UTC)
+  private lazy val Mapper = new ObjectMapper
   private val FieldCount = 108
 
   private object FieldIndexes { // 0-indexed
@@ -51,7 +72,47 @@ object EnrichedEventLoader {
     val eventId = 6
     val contexts = 52
     val unstructEvent = 58
+    val network_userId = 17
+    val user_fingerprint = 14
+    val augur_did = 109
+    val augur_user_id = 110
   }
+
+  def extractAugur(fields: Array[String]): (String, String) = {
+    val contexts = fields(FieldIndexes.contexts)
+    val unstruct = fields(FieldIndexes.unstructEvent)
+    List(contexts, unstruct).foreach { json =>
+      try {
+        val contextsJson = Mapper.readTree(json)
+        for (index <- Range(0, contextsJson.at("/data").size)) {
+          val device_id = contextsJson.at(s"/data/$index/data/augurDID")
+          val user_id = contextsJson.at(s"/data/$index/data/augurUID")
+          (device_id.isMissingNode, user_id.isMissingNode) match {
+            case (true, _) => None
+            case (false, true) => return (device_id.asText, null)
+            case (false, false) => return (device_id.asText, user_id.asText)
+          }
+        }
+      }
+      catch {
+        case _:Throwable =>
+          None
+      }
+    }
+
+    (null, null)
+  }
+
+  def filterFields(fields: Array[String]): Array[String] = {
+    val (device_id, user_id) = extractAugur(fields)
+    val newFields = fields.clone()
+    newFields(FieldIndexes.contexts) = null
+    newFields(FieldIndexes.unstructEvent) = null
+    newFields(FieldIndexes.network_userId) = null
+    newFields(FieldIndexes.user_fingerprint) = null
+    newFields ++ Array(device_id, user_id)
+  }
+
 
   /**
    * Converts the source string into a 
@@ -69,6 +130,11 @@ object EnrichedEventLoader {
   def toEnrichedEvent(line: String): ValidatedEnrichedEvent = {
 
     val fields = line.split("\t", -1).map(f => if (f == "") null else f)
+
+    toEnrichedEvent(fields)
+  }
+
+  def toEnrichedEvent(fields: Array[String]) : ValidatedEnrichedEvent = {
     val len = fields.length
     if (len < FieldCount)
       return s"Line does not match Snowplow enriched event (expected ${FieldCount}+ fields; found $len)".failNel[EnrichedEvent]

@@ -18,6 +18,7 @@ package hadoop
 // Cascading
 import cascading.tap.SinkMode
 import cascading.tuple.Fields
+import com.fasterxml.jackson.databind.JsonNode
 
 // Scala
 import scala.collection.mutable.Buffer
@@ -34,11 +35,7 @@ import common._
 import common.FatalEtlError
 
 // Iglu Scala Client
-import iglu.client.{
-  ProcessingMessageNel,
-  JsonSchemaPair,
-  Resolver
-}
+import com.snowplowanalytics.iglu.client.{SchemaKey, ProcessingMessageNel, JsonSchemaPair, Resolver}
 import iglu.client.validation.ProcessingMessageMethods._
 
 // This project
@@ -72,6 +69,26 @@ object ShredJob {
       event <- EnrichedEventLoader.toEnrichedEvent(line).toProcessingMessages
       shred <- Shredder.shred(event)
     } yield shred
+
+  def loadRaw(line: String)(implicit resolver: Resolver): Array[String] =
+    line.split("\t", -1).map(f => if (f == "") null else f)
+
+  def loadAndShred(fields: Array[String])(implicit resolver: Resolver): ValidatedNel[JsonSchemaPairs] = {
+    import scala.runtime.ScalaRunTime._
+    for {
+      event <- EnrichedEventLoader.toEnrichedEvent(fields).toProcessingMessages
+      shred <- Shredder.shred(event)
+    } yield shred
+  }
+
+  def filterFields(fields: Array[String])(implicit resolver: Resolver): Option[Array[String]] = {
+    val goods: Option[List[(SchemaKey, JsonNode)]] = projectGoods(loadAndShred(fields))
+    if (goods.isDefined) {
+//      println(goods)
+      return Some(EnrichedEventLoader.filterFields(fields))
+    }
+    None
+  }
 
   /**
    * Projects our Failures into a Some; Successes
@@ -126,6 +143,7 @@ class ShredJob(args : Args) extends Job(args) {
   val input = MultipleTextLineFiles(shredConfig.inFolder).read
   val goodOutput = PartitionedTsv(shredConfig.outFolder, ShredJob.ShreddedPartition, false, ('json), SinkMode.REPLACE)
   val badOutput = Tsv(shredConfig.badFolder)  // Technically JSONs but use Tsv for custom JSON creation
+  val filteredOutput = Tsv(shredConfig.filteredFolder)
   implicit val resolver = shredConfig.igluResolver
 
   // Do we add a failure trap?
@@ -135,9 +153,20 @@ class ShredJob(args : Args) extends Job(args) {
   }
 
   // Scalding data pipeline
-  val common = trappableInput
-    .map('line -> 'output) { l: String =>
-      ShredJob.loadAndShred(l)
+  val raw = trappableInput
+    .map('line -> 'fields) { l: String =>
+      ShredJob.loadRaw(l)
+    }
+
+  val filteredRaw = raw
+    .flatMap('fields -> 'filtered) { fields: Array[String] =>
+      ShredJob.filterFields(fields)
+    }
+    .write(filteredOutput)
+
+  val common = raw
+    .map('fields -> 'output) { fields: Array[String] =>
+      ShredJob.loadAndShred(fields)
     }
 
   // Handle bad rows
