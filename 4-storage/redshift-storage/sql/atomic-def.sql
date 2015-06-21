@@ -22,81 +22,81 @@ CREATE SCHEMA atomic;
 -- Create events table
 CREATE TABLE atomic.events (
 	-- App
-	app_id varchar(255) encode text255,
-	platform varchar(255) encode text255,
+	app_id varchar(255) encode lzo,
+	platform varchar(255) encode lzo,
 	-- Date/time
 	etl_tstamp timestamp,                              -- Added in 0.4.0
 	collector_tstamp timestamp not null,
 	dvce_tstamp timestamp,
 	-- Event
-	event varchar(128) encode text255,
+	event varchar(128) encode lzo,
 	                                                   -- Removed event_vendor in 0.4.0
 	event_id char(36) not null unique,
 	txn_id int,
 	-- Namespacing and versioning
-	name_tracker varchar(128) encode text255,
-	v_tracker varchar(100) encode text255,
-	v_collector varchar(100) encode text255 not null,
-	v_etl varchar(100) encode text255 not null,
+	name_tracker varchar(128) encode lzo,
+	v_tracker varchar(100) encode lzo,
+	v_collector varchar(100) encode lzo not null,
+	v_etl varchar(100) encode lzo not null,
 	-- User and visit
-	user_id varchar(255) encode runlength,
-	user_ipaddress varchar(19) encode runlength,
-	user_fingerprint varchar(50) encode runlength,
-	domain_userid varchar(16),
+	user_id varchar(255) encode lzo,
+	user_ipaddress varchar(19) encode lzo,
+	user_fingerprint varchar(50) encode lzo,
+	domain_userid varchar(16) encode lzo,
 	domain_sessionidx smallint,
-	network_userid varchar(38),
+	network_userid varchar(38) encode lzo,
 	-- Location
-	geo_country char(2) encode runlength,
-	geo_region char(2) encode runlength,
-	geo_city varchar(75) encode runlength,
-	geo_zipcode varchar(15) encode runlength,
-	geo_latitude double precision encode runlength,
-	geo_longitude double precision encode runlength,
-	geo_region_name varchar(100) encode runlength,     -- Added in 0.4.0
+	geo_country char(2) encode lzo,
+	geo_region char(2) encode lzo,
+	geo_city varchar(75) encode lzo,
+	geo_zipcode varchar(15) encode lzo,
+	geo_latitude double precision encode bytedict,
+	geo_longitude double precision encode bytedict,
+	geo_region_name varchar(100) encode lzo,     -- Added in 0.4.0
 	-- IP lookups
-	ip_isp varchar(100) encode runlength,              -- Added in 0.4.0
-	ip_organization varchar(100) encode runlength,     -- Added in 0.4.0
-	ip_domain varchar(100) encode runlength,           -- Added in 0.4.0
-	ip_netspeed varchar(100) encode runlength,         -- Added in 0.4.0
+	ip_isp varchar(100) encode lzo,              -- Added in 0.4.0
+	ip_organization varchar(100) encode lzo,     -- Added in 0.4.0
+	ip_domain varchar(100) encode lzo,           -- Added in 0.4.0
+	ip_netspeed varchar(100) encode lzo,         -- Added in 0.4.0
 	-- Page
-	page_url varchar(4096),
-	page_title varchar(2000),
-	page_referrer varchar(4096),
+	page_url varchar(4096) encode lzo,
+	page_title varchar(2000) encode lzo,
+	page_referrer varchar(4096) encode lzo,
 	-- Page URL components
-	page_urlscheme varchar(16) encode text255,
-	page_urlhost varchar(255) encode text255,
-	page_urlport int,
-	page_urlpath varchar(1000) encode text32k,
-	page_urlquery varchar(3000),
-	page_urlfragment varchar(255),
+	page_urlscheme varchar(16) encode lzo,
+	page_urlhost varchar(255) encode lzo,
+	page_urlport int encode lzo,
+	page_urlpath varchar(1000) encode lzo,
+	page_urlquery varchar(3000) encode lzo,
+	page_urlfragment varchar(255) encode lzo,
 	-- Referrer URL components
-	refr_urlscheme varchar(16) encode text255,
-	refr_urlhost varchar(255) encode text255,
+	refr_urlscheme varchar(16) encode lzo,
+	refr_urlhost varchar(255) encode lzo,
 	refr_urlport int,
-	refr_urlpath varchar(1000) encode text32k,
-	refr_urlquery varchar(3000),
-	refr_urlfragment varchar(255),
+	refr_urlpath varchar(1000) encode lzo,
+	refr_urlquery varchar(3000) encode lzo,
+	refr_urlfragment varchar(255) encode lzo,
 	-- Referrer details
-	refr_medium varchar(25) encode text255,
-	refr_source varchar(50) encode text255,
-	refr_term varchar(255) encode raw,
+	refr_medium varchar(25) encode lzo,
+	refr_source varchar(50) encode lzo,
+	refr_term varchar(255) encode lzo,
 	-- Marketing
-	mkt_medium varchar(255) encode text255,
-	mkt_source varchar(255) encode text255,
-	mkt_term varchar(255) encode raw,
-	mkt_content varchar(500) encode raw,
-	mkt_campaign varchar(255) encode text32k,
+	mkt_medium varchar(255) encode lzo,
+	mkt_source varchar(255) encode lzo,
+	mkt_term varchar(255) encode lzo,
+	mkt_content varchar(500) encode lzo,
+	mkt_campaign varchar(255) encode lzo,
 	-- Custom contexts
-	contexts varchar(10000) encode raw,
+	contexts varchar(10000) encode lzo,
 	-- Custom structured event
-	se_category varchar(255) encode text255,
-	se_action varchar(255) encode text255,
-	se_label varchar(255) encode text32k,
-	se_property varchar(255) encode text32k,
+	se_category varchar(255) encode lzo,
+	se_action varchar(255) encode lzo,
+	se_label varchar(255) encode lzo,
+	se_property varchar(255) encode lzo,
 	se_value double precision,
 	-- Custom unstructured event
 	                                                   -- Removed ue_name in 0.4.0
-	unstruct_event varchar(10000) encode raw,          -- Renamed ue_properties to unstruct_event in 0.4.0
+	unstruct_event varchar(10000) encode lzo,          -- Renamed ue_properties to unstruct_event in 0.4.0
 	-- Ecommerce
 	tr_orderid varchar(255) encode raw,
 	tr_affiliation varchar(255) encode text255,
@@ -118,14 +118,14 @@ CREATE TABLE atomic.events (
 	pp_yoffset_min integer,
 	pp_yoffset_max integer,
 	-- User Agent
-	useragent varchar(1000) encode text32k,
+	useragent varchar(1000) encode lzo,
 	-- Browser
-	br_name varchar(50) encode text255,
-	br_family varchar(50) encode text255,
-	br_version varchar(50) encode text255,
-	br_type varchar(50) encode text255,
-	br_renderengine varchar(50) encode text255,
-	br_lang varchar(255) encode text255,
+	br_name varchar(50) encode lzo,
+	br_family varchar(50) encode lzo,
+	br_version varchar(50) encode lzo,
+	br_type varchar(50) encode lzo,
+	br_renderengine varchar(50) encode lzo,
+	br_lang varchar(255) encode lzo,
 	br_features_pdf boolean,
 	br_features_flash boolean,
 	br_features_java boolean,
@@ -136,25 +136,25 @@ CREATE TABLE atomic.events (
 	br_features_gears boolean ,
 	br_features_silverlight boolean,
 	br_cookies boolean,
-	br_colordepth varchar(12) encode text255,
+	br_colordepth varchar(12) encode lzo,
 	br_viewwidth integer,
 	br_viewheight integer,
 	-- Operating System
-	os_name varchar(50) encode text255,
-	os_family varchar(50)  encode text255,
-	os_manufacturer varchar(50)  encode text255,
-	os_timezone varchar(255)  encode text255,
+	os_name varchar(50) encode lzo,
+	os_family varchar(50)  encode lzo,
+	os_manufacturer varchar(50)  encode lzo,
+	os_timezone varchar(255)  encode lzo,
 	-- Device/Hardware
-	dvce_type varchar(50)  encode text255,
+	dvce_type varchar(50)  encode lzo,
 	dvce_ismobile boolean,
 	dvce_screenwidth integer,
 	dvce_screenheight integer,
 	-- Document
-	doc_charset varchar(128) encode text255,
+	doc_charset varchar(128) encode lzo,
 	doc_width integer,
 	doc_height integer,
 	CONSTRAINT event_id_040_pk PRIMARY KEY(event_id)
 )
 DISTSTYLE KEY
 DISTKEY (event_id)
-SORTKEY (collector_tstamp);
+INTERLEAVED SORTKEY (collector_tstamp, app_id, event);
