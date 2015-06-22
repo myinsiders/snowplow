@@ -46,19 +46,27 @@ object EnrichedEventLoader {
 
   def main(args: Array[String]): Unit = {
     val json = "{\n    \"schema\": \"iglu:com.snowplowanalytics.snowplow/contexts/jsonschema/1-0-0\",\n    \"data\": [\n        {\n            \"schema\": \"iglu:com.au.digdeep/page/jsonschema/2-0-0\",\n            \"data\": {\n                \"WPtemplateFile\": \"undefined\",\n                \"WPtemplateDisplay\": \"undefined\",\n                \"WPtemplateDisplayType\": \"undefined\",\n                \"WPtemplateFileId\": \"undefined\",\n                \"WPtemplateFilePath\": \"/\",\n                \"WPappId\": \"undefined\",\n                \"WPeventId\": \"undefined\"\n            }\n        }\n    ]\n}"
+    val json2 = "{\n    \"schema\": \"iglu:com.snowplowanalytics.snowplow/contexts/jsonschema/1-0-0\",\n    \"data\":         {\n            \"schema\": \"iglu:com.au.digdeep/page/jsonschema/2-0-0\",\n            \"data\": {\n                \"WPtemplateFile\": \"undefined\",\n                \"WPtemplateDisplay\": \"undefined\",\n                \"WPtemplateDisplayType\": \"undefined\",\n                \"WPtemplateFileId\": \"undefined\",\n                \"WPtemplateFilePath\": \"/\",\n                \"WPappId\": \"undefined\",\n                \"WPeventId\": \"undefined\"\n            }\n            }\n}"
     val contextsJson = Mapper.readTree(json)
-    for (index <- Range(0, contextsJson.at("/data").size)) {
-      val device_id = contextsJson.at(s"/data/$index/data/WPtemplateFile")
-      val user_id = contextsJson.at(s"/data/$index/data/augurUID")
+    val dataNode = contextsJson.at("/data")
+    if (dataNode.isMissingNode) return
+    def processDataNode(dataNode: JsonNode): Any = {
+      val device_id = dataNode.at(s"/data/WPtemplateFile")
+      val user_id = dataNode.at(s"/data/augurUID")
       (device_id.isMissingNode, user_id.isMissingNode) match {
         case (true, _) => None
-        case (false, true) => println (device_id.asText, null)
-        case (false, false) => println (device_id.asText, user_id.asText)
+        case (false, true) => println(device_id.asText, null)
+        case (false, false) => println(device_id.asText, user_id.asText)
       }
     }
-    val fields: Array[String] = Array("1","2")
-    println(fields)
-    println(fields ++ Array("c"))
+    if (dataNode.isArray) {
+      for (index <- Range(0, dataNode.size)) {
+        val childNode = dataNode.get(index)
+        processDataNode(childNode)
+      }
+    } else {
+      processDataNode(dataNode)
+    }
   }
 
 
@@ -83,10 +91,21 @@ object EnrichedEventLoader {
     List(contexts, unstruct).foreach { json =>
       try {
         val contextsJson = Mapper.readTree(json)
-        // TODO data can be an array or single item
-        for (index <- Range(0, contextsJson.at("/data").size)) {
-          val device_id = contextsJson.at(s"/data/$index/data/augurDID")
-          val user_id = contextsJson.at(s"/data/$index/data/augurUID")
+        val dataNode = contextsJson.at("/data")
+        if (dataNode.isMissingNode) return (null, null)
+        if (dataNode.isArray) {
+          for (index <- Range(0, dataNode.size)) {
+            val device_id = dataNode.get(index).at("/data/augurDID")
+            val user_id = dataNode.get(index).at("/data/augurUID")
+            (device_id.isMissingNode, user_id.isMissingNode) match {
+              case (true, _) => None
+              case (false, true) => return (device_id.asText, null)
+              case (false, false) => return (device_id.asText, user_id.asText)
+            }
+          }
+        } else {
+          val device_id = dataNode.at("/data/augurDID")
+          val user_id = dataNode.at("/data/augurUID")
           (device_id.isMissingNode, user_id.isMissingNode) match {
             case (true, _) => None
             case (false, true) => return (device_id.asText, null)
@@ -111,7 +130,6 @@ object EnrichedEventLoader {
     newFields(FieldIndexes.network_userId) = null
     newFields(FieldIndexes.user_fingerprint) = null
     newFields ++ Array(device_id, user_id)
-//    newFields ++ Array("test did", "test uid")
   }
 
 

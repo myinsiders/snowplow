@@ -84,8 +84,7 @@ object ShredJob {
   def filterFields(fields: Array[String])(implicit resolver: Resolver): Option[String] = {
     val goods: Option[List[(SchemaKey, JsonNode)]] = projectGoods(loadAndShred(fields))
     if (goods.isDefined) {
-//      println(goods)
-      return Some(EnrichedEventLoader.filterFields(fields).map(f => if (f == null) "" else f).foldLeft("")((a, b) => a + "\t" + b))
+      return Some(EnrichedEventLoader.filterFields(fields).map(f => if (f == null) "" else f).mkString("\t"))
     }
     None
   }
