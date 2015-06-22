@@ -81,13 +81,13 @@ object ShredJob {
     } yield shred
   }
 
-  def filterFields(fields: Array[String])(implicit resolver: Resolver): String = {
+  def filterFields(fields: Array[String])(implicit resolver: Resolver): Option[String] = {
     val goods: Option[List[(SchemaKey, JsonNode)]] = projectGoods(loadAndShred(fields))
     if (goods.isDefined) {
 //      println(goods)
-      return EnrichedEventLoader.filterFields(fields).map(f => if (f == null) "" else f).foldLeft("")((a, b) => a + "\t" + b)
+      return Some(EnrichedEventLoader.filterFields(fields).map(f => if (f == null) "" else f).foldLeft("")((a, b) => a + "\t" + b))
     }
-    null
+    None
   }
 
   /**
@@ -159,7 +159,7 @@ class ShredJob(args : Args) extends Job(args) {
     }
 
   val filteredRaw = raw
-    .mapTo('fields -> 'filtered) { fields: Array[String] =>
+    .flatMapTo('fields -> 'filtered) { fields: Array[String] =>
       ShredJob.filterFields(fields)
     }
     .write(filteredOutput)
