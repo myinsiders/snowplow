@@ -47,7 +47,6 @@ object EnrichedEventLoader {
   def main(args: Array[String]): Unit = {
     val json = "{\n    \"schema\": \"iglu:com.snowplowanalytics.snowplow/contexts/jsonschema/1-0-0\",\n    \"data\": [\n        {\n            \"schema\": \"iglu:com.au.digdeep/page/jsonschema/2-0-0\",\n            \"data\": {\n                \"WPtemplateFile\": \"undefined\",\n                \"WPtemplateDisplay\": \"undefined\",\n                \"WPtemplateDisplayType\": \"undefined\",\n                \"WPtemplateFileId\": \"undefined\",\n                \"WPtemplateFilePath\": \"/\",\n                \"WPappId\": \"undefined\",\n                \"WPeventId\": \"undefined\"\n            }\n        }\n    ]\n}"
     val contextsJson = Mapper.readTree(json)
-    println(contextsJson.at("/data").getClass)
     for (index <- Range(0, contextsJson.at("/data").size)) {
       val device_id = contextsJson.at(s"/data/$index/data/WPtemplateFile")
       val user_id = contextsJson.at(s"/data/$index/data/augurUID")
@@ -84,6 +83,7 @@ object EnrichedEventLoader {
     List(contexts, unstruct).foreach { json =>
       try {
         val contextsJson = Mapper.readTree(json)
+        // TODO data can be an array or single item
         for (index <- Range(0, contextsJson.at("/data").size)) {
           val device_id = contextsJson.at(s"/data/$index/data/augurDID")
           val user_id = contextsJson.at(s"/data/$index/data/augurUID")
@@ -111,6 +111,7 @@ object EnrichedEventLoader {
     newFields(FieldIndexes.network_userId) = null
     newFields(FieldIndexes.user_fingerprint) = null
     newFields ++ Array(device_id, user_id)
+//    newFields ++ Array("test did", "test uid")
   }
 
 
