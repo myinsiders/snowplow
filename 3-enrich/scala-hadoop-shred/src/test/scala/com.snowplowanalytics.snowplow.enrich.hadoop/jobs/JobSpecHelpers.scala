@@ -177,5 +177,33 @@ object JobSpecHelpers {
 
     Sinks(output, badRows, filtered, exceptions)
   }
+  def runJobInTool(input: File): Sinks = {
+
+    def mkTmpDir(tag: String, createParents: Boolean = false, containing: Option[Lines] = None): File = {
+      val f = File.createTempFile(s"snowplow-shred-job-${tag}-", "")
+      if (createParents) f.mkdirs() else f.mkdir()
+      containing.map(_.writeTo(f))
+      f
+    }
+
+    val output     = mkTmpDir("output")
+    val filtered   = mkTmpDir("filtered")
+    val badRows    = mkTmpDir("bad-rows")
+    val exceptions = mkTmpDir("exceptions")
+
+    val args = Array[String]("com.snowplowanalytics.snowplow.enrich.hadoop.ShredJob", "--local",
+      "--input_folder",      input.getAbsolutePath,
+      "--output_folder",     output.getAbsolutePath,
+      "--bad_rows_folder",   badRows.getAbsolutePath,
+      "--filtered_folder", filtered.getAbsolutePath,
+      "--exceptions_folder", exceptions.getAbsolutePath,
+      "--iglu_config",       IgluConfig)
+
+
+    // Execute
+    Tool.main(args)
+
+    Sinks(output, badRows, filtered, exceptions)
+  }
 
 }

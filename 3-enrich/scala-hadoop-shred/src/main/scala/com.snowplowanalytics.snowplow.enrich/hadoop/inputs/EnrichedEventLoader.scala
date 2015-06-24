@@ -85,7 +85,7 @@ object EnrichedEventLoader {
     val augur_user_id = 110
   }
 
-  def extractAugur(fields: Array[String]): (String, String) = {
+  def extractAugur(fields: Array[String]): Option[(String, String)] = {
     val contexts = fields(FieldIndexes.contexts)
     val unstruct = fields(FieldIndexes.unstructEvent)
 
@@ -121,17 +121,29 @@ object EnrichedEventLoader {
         case (false, true) => Some(device_id.textValue(), null)
         case (false, false) => Some(device_id.textValue(), user_id.textValue())
       }
-    }.head
+    }.headOption
   }
 
   def filterFields(fields: Array[String]): Array[String] = {
-    val (device_id, user_id) = extractAugur(fields)
-    val newFields = fields.clone()
-    newFields(FieldIndexes.contexts) = null
-    newFields(FieldIndexes.unstructEvent) = null
-    newFields(FieldIndexes.network_userId) = null
-    newFields(FieldIndexes.user_fingerprint) = null
-    newFields ++ Array(device_id, user_id)
+    try {
+      val newFields = fields.clone()
+      newFields(FieldIndexes.contexts) = null
+      newFields(FieldIndexes.unstructEvent) = null
+      newFields(FieldIndexes.network_userId) = null
+      newFields(FieldIndexes.user_fingerprint) = null
+      val deviceDetails = extractAugur(fields)
+      if (deviceDetails.isDefined) {
+        val (device_id, user_id) = deviceDetails.get
+        newFields ++ Array(device_id, user_id)
+      } else {
+        newFields ++ Array(null, null)
+      }
+    }
+    catch {
+      case t: Throwable =>
+        t.printStackTrace()
+        fields ++ Array(null, null)
+    }
   }
 
 
