@@ -48,6 +48,12 @@ object SpecHelpers {
                     |"uri": "http://iglucentral.com"
                   |}
                 |}
+              |},
+              |{
+                |"name":"Digdeep",
+                |"priority":0,
+                |"vendorPrefixes":["com.au.digdeep"],
+                |"connection":{"http":{"uri":"http://digdeep-snowplow-hosted-assets.s3-website-ap-southeast-2.amazonaws.com"}}
               |}
             |]
           |}

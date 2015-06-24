@@ -51,12 +51,12 @@ object EnrichedEventLoader {
     val dataNode = contextsJson.at("/data")
     if (dataNode.isMissingNode) return
     def processDataNode(dataNode: JsonNode): Any = {
-      val device_id = dataNode.at(s"/data/WPtemplateFile")
-      val user_id = dataNode.at(s"/data/augurUID")
+      val device_id = dataNode.at("/data/WPtemplateFile")
+      val user_id = dataNode.at("/data/augurUID")
       (device_id.isMissingNode, user_id.isMissingNode) match {
         case (true, _) => None
-        case (false, true) => println(device_id.asText, null)
-        case (false, false) => println(device_id.asText, user_id.asText)
+        case (false, true) => println(device_id.textValue(), null)
+        case (false, false) => println(device_id.textValue(), user_id.textValue())
       }
     }
     if (dataNode.isArray) {
@@ -88,38 +88,40 @@ object EnrichedEventLoader {
   def extractAugur(fields: Array[String]): (String, String) = {
     val contexts = fields(FieldIndexes.contexts)
     val unstruct = fields(FieldIndexes.unstructEvent)
-    List(contexts, unstruct).foreach { json =>
-      try {
-        val contextsJson = Mapper.readTree(json)
-        val dataNode = contextsJson.at("/data")
-        if (dataNode.isMissingNode) return (null, null)
-        if (dataNode.isArray) {
-          for (index <- Range(0, dataNode.size)) {
-            val device_id = dataNode.get(index).at("/data/augurDID")
-            val user_id = dataNode.get(index).at("/data/augurUID")
-            (device_id.isMissingNode, user_id.isMissingNode) match {
-              case (true, _) => None
-              case (false, true) => return (device_id.asText, null)
-              case (false, false) => return (device_id.asText, user_id.asText)
+
+    val nodes = List(contexts, unstruct).flatMap { json =>
+      if (json != null) {
+        try {
+          val contextsJson = Mapper.readTree(json)
+          val dataNode = contextsJson.at("/data")
+          if (!dataNode.isMissingNode) {
+            dataNode.isArray match {
+              case true => Range(0, dataNode.size).map(index => dataNode.get(index))
+              case false => List(dataNode)
             }
-          }
-        } else {
-          val device_id = dataNode.at("/data/augurDID")
-          val user_id = dataNode.at("/data/augurUID")
-          (device_id.isMissingNode, user_id.isMissingNode) match {
-            case (true, _) => None
-            case (false, true) => return (device_id.asText, null)
-            case (false, false) => return (device_id.asText, user_id.asText)
+          } else {
+            List()
           }
         }
-      }
-      catch {
-        case _:Throwable =>
-          None
+        catch {
+          case t: Throwable =>
+            t.printStackTrace()
+            List()
+        }
+      } else {
+        List()
       }
     }
 
-    (null, null)
+    nodes.flatMap { node =>
+      val device_id = node.at("/data/augurDID")
+      val user_id = node.at("/data/augurUID")
+      (device_id.isMissingNode, user_id.isMissingNode) match {
+        case (true, _) => None
+        case (false, true) => Some(device_id.textValue(), null)
+        case (false, false) => Some(device_id.textValue(), user_id.textValue())
+      }
+    }.head
   }
 
   def filterFields(fields: Array[String]): Array[String] = {
