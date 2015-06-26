@@ -74,7 +74,6 @@ object ShredJob {
     line.split("\t", -1).map(f => if (f == "") null else f)
 
   def loadAndShred(fields: Array[String])(implicit resolver: Resolver): ValidatedNel[JsonSchemaPairs] = {
-    import scala.runtime.ScalaRunTime._
     for {
       event <- EnrichedEventLoader.toEnrichedEvent(fields).toProcessingMessages
       shred <- Shredder.shred(event)
@@ -82,11 +81,11 @@ object ShredJob {
   }
 
   def filterFields(fields: Array[String])(implicit resolver: Resolver): Option[String] = {
-    val goods: Option[List[(SchemaKey, JsonNode)]] = projectGoods(loadAndShred(fields))
-    if (goods.isDefined) {
-      return Some(EnrichedEventLoader.filterFields(fields).map(f => if (f == null) "" else f).mkString("\t"))
-    }
-    None
+//    val goods: Option[List[(SchemaKey, JsonNode)]] = projectGoods(loadAndShred(fields))
+//    if (goods.isDefined) {
+      Some(EnrichedEventLoader.filterFields(fields).map(f => if (f == null) "" else f).mkString("\t"))
+//    }
+//    None
   }
 
   /**

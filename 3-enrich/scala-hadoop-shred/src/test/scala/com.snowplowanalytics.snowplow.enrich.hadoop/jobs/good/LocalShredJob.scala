@@ -61,7 +61,7 @@ class LocalShredJob extends Specification {
       // Scala
       import scala.io.{Source => ScalaSource}
       println("Filtered in " + Sinks.filtered)
-      ScalaSource.fromFile(Sinks.filtered).getLines.toList.size must_== 1143
+      ScalaSource.fromFile(Sinks.filtered).getLines.toList.size must_== 1147
     }
     "not trap any exceptions" in {
       // TODO: not working
