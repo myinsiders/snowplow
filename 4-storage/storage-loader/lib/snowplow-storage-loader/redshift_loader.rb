@@ -41,6 +41,13 @@ module Snowplow
         # First let's get our statements for shredding (if any)
         shredded_statements = get_shredded_statements(config, target)
 
+        src =
+            if target[:use_filtered].nil? or not target[:use_filtered] or config[:s3][:buckets][:shredded][:filtered].nil?
+              config[:s3][:buckets][:enriched][:good]
+            else
+              config[:s3][:buckets][:shredded][:filtered]
+            end
+
         # Build our main transaction, consisting of COPY and COPY FROM JSON
         # statements, and potentially also a set of table ANALYZE statements.
         copy_analyze_statements = [
