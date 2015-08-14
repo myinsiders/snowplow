@@ -15,7 +15,7 @@ package com.snowplowanalytics.snowplow.storage.kinesis.redshift
 import java.sql.{BatchUpdateException, Timestamp, Types}
 
 import com.snowplowanalytics.iglu.client.Resolver
-import com.snowplowanalytics.snowplow.storage.kinesis.Redshift.EmitterInput
+import com.snowplowanalytics.snowplow.storage.kinesis.redshift.EmitterInput
 import org.postgresql.ds.PGPoolingDataSource
 
 import scala.collection.JavaConverters._
@@ -74,7 +74,7 @@ class RedshiftEmitter(config: KinesisConnectorConfiguration, badSink: ISink)(imp
   }
   val emptyList = List[EmitterInput]()
 
-  var shreder: InstantShreder = null
+  var shredder: InstantShredder = null
 
   /**
    * Reads items from a buffer and saves them to s3.
@@ -90,13 +90,13 @@ class RedshiftEmitter(config: KinesisConnectorConfiguration, badSink: ISink)(imp
     log.info(s"Flushing buffer with ${buffer.getRecords.size} records.")
 
     try {
-      if (shreder == null) {
-        shreder = new InstantShreder(RedshiftEmitter.redshiftDataSource)
+      if (shredder == null) {
+        shredder = new InstantShredder(RedshiftEmitter.redshiftDataSource)
       }
       implicit val dataSource = RedshiftEmitter.redshiftDataSource
       try {
         buffer.getRecords.foreach { record =>
-          shreder.shred(record._1)
+          shredder.shred(record._1)
           // Erase the fields after they've been extracted by shredding
           record._1(FieldIndexes.contexts) = null
           record._1(FieldIndexes.unstructEvent) = null
@@ -106,7 +106,7 @@ class RedshiftEmitter(config: KinesisConnectorConfiguration, badSink: ISink)(imp
         }
       }
       finally {
-        shreder.finished()
+        shredder.finished()
       }
     }
     catch {

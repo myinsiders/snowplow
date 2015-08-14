@@ -19,12 +19,12 @@ import org.apache.commons.logging.LogFactory
 import scala.annotation.tailrec
 import scalaz.{Failure, Success}
 
-class InstantShreder(dataSource : DataSource)(implicit resolver: Resolver, props: Properties) {
+class InstantShredder(dataSource : DataSource)(implicit resolver: Resolver, props: Properties) {
   val jsonPaths = scala.collection.mutable.Map[String, Option[Array[String]]]()
   implicit val _dataSource: DataSource = dataSource
-  val log = LogFactory.getLog(classOf[InstantShreder])
+  val log = LogFactory.getLog(classOf[InstantShredder])
 
-  var file = if (props.containsKey("logFile")) new FileWriter("/tmp/shreder.txt") else null
+  var file = if (props.containsKey("logFile")) new FileWriter("/tmp/shredder.txt") else null
 
   def shred(fields: Array[String]) = {
     if (file != null) {
@@ -130,7 +130,7 @@ class InstantShreder(dataSource : DataSource)(implicit resolver: Resolver, props
         "1"
       } else {
         if (writer.isEmpty) log.warn(s"Writer is not defined for $key")
-        if (fields.isEmpty) log.warn(s"Could not parse fields off $json")
+        if (fields.isEmpty) log.warn(s"Could not parse fields from $json")
         "0"
       }
     }
