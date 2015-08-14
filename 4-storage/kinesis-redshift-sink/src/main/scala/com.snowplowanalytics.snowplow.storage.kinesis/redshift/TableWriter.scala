@@ -86,15 +86,15 @@ object TableWriter {
         (props.getProperty("defaultSchema"), schemaName)
       }
     }
-    val tableName = ((vendor, version) match {
+    val tableName = s"$dbSchema." + ((vendor, version) match {
       case (Some(_vendor), Some(_version)) =>
-        s"$dbSchema." + s"${_vendor}_${dbTable}_${_version}"
+        s"${_vendor}_${dbTable}_${_version}"
       case (None, Some(_version)) =>
-        s"$dbSchema." + s"${dbTable}_${_version}"
+        s"${dbTable}_${_version}"
       case (None, None) =>
-        s"$dbSchema." + s"$dbTable"
+        s"$dbTable"
       case (Some(_vendor), None) =>
-        s"$dbSchema." + s"${vendor}_$dbTable"
+        s"${vendor}_$dbTable"
     }).replaceAllLiterally(".", "_").toLowerCase()
 
     synchronized {
