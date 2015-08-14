@@ -15,7 +15,6 @@ package com.snowplowanalytics.snowplow.storage.kinesis.redshift
 import java.sql.{BatchUpdateException, Timestamp, Types}
 
 import com.snowplowanalytics.iglu.client.Resolver
-import com.snowplowanalytics.snowplow.storage.kinesis.redshift.EmitterInput
 import org.postgresql.ds.PGPoolingDataSource
 
 import scala.collection.JavaConverters._

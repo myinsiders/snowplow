@@ -22,7 +22,6 @@ import com.amazonaws.services.kinesis.connectors.{
   KinesisConnectorRecordProcessorFactory
 }
 import com.snowplowanalytics.iglu.client.Resolver
-import com.snowplowanalytics.snowplow.storage.kinesis.redshift.{EmitterInput, ValidatedRecord}
 
 // This project
 import sinks._
