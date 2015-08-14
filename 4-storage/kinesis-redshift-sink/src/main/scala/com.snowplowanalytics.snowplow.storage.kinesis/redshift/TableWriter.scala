@@ -86,16 +86,17 @@ object TableWriter {
         (props.getProperty("defaultSchema"), schemaName)
       }
     }
-    val tableName = (vendor, version) match {
+    val tableName = ((vendor, version) match {
       case (Some(_vendor), Some(_version)) =>
-        s"$dbSchema." + s"${_vendor}_${dbTable}_${_version}".replaceAllLiterally(".", "_")
+        s"$dbSchema." + s"${_vendor}_${dbTable}_${_version}"
       case (None, Some(_version)) =>
-        s"$dbSchema." + s"${dbTable}_${_version}".replaceAllLiterally(".", "_")
+        s"$dbSchema." + s"${dbTable}_${_version}"
       case (None, None) =>
-        s"$dbSchema." + s"$dbTable".replaceAllLiterally(".", "_")
+        s"$dbSchema." + s"$dbTable"
       case (Some(_vendor), None) =>
-        s"$dbSchema." + s"${vendor}_$dbTable".replaceAllLiterally(".", "_")
-    }
+        s"$dbSchema." + s"${vendor}_$dbTable"
+    }).replaceAllLiterally(".", "_").toLowerCase()
+
     synchronized {
       if (!writers.contains(tableName)) {
         if (tableExists(tableName)) {
