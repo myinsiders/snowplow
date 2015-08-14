@@ -30,6 +30,8 @@ object SQLConverters {
     if (value == null) stat.setNull(index, Types.BOOLEAN) else stat.setBoolean(index, value.rsBoolean)
   def setInteger(value: String, stat: PreparedStatement, index: Int) =
     if (value == null) stat.setNull(index, Types.INTEGER) else stat.setInt(index, value.toInt)
+  def setBigint(value: String, stat: PreparedStatement, index: Int) =
+    if (value == null) stat.setNull(index, Types.BIGINT) else stat.setLong(index, value.toLong)
   def setDouble(value: String, stat: PreparedStatement, index: Int) =
     if (value == null) stat.setNull(index, Types.DOUBLE) else stat.setDouble(index, value.toDouble)
   def setDecimal(value: String, stat: PreparedStatement, index: Int) =
@@ -140,7 +142,8 @@ class TableWriter(dataSource:DataSource, table: String) {
       8 -> SQLConverters.setDouble,
       93 -> SQLConverters.setTimestamp,
       -7 -> SQLConverters.setBoolean,
-      12 -> SQLConverters.setString
+      12 -> SQLConverters.setString,
+      -5 -> SQLConverters.setBigint
     )
   readMetadata()
 
