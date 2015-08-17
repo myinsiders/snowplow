@@ -30,7 +30,7 @@ class InstantShredder(dataSource : DataSource)(implicit resolver: Resolver, prop
     if (file != null) {
       file.write(fields.map(f => if (f == null) "" else f).mkString("\t")+"\n")
     }
-    if (log.isDebugEnabled) log.debug("Shreding " + fields.map(f => if (f == null) "" else f).mkString(","))
+    if (log.isDebugEnabled) log.debug("Shredding " + fields.map(f => if (f == null) "" else f).mkString(","))
     val appId = fields(FieldIndexes.appId)
     val validatedEvents = ShredJob.loadAndShred2(fields.map(f => if (f == null) "" else f).mkString("\t"))
     val allStored = for {
@@ -98,10 +98,11 @@ class InstantShredder(dataSource : DataSource)(implicit resolver: Resolver, prop
       case Some((x:Int, y:Int, z:Int)) => x
       case _ => 1
     }
-    val mapKey = s"${key.vendor}/${key.name}_$version"
+    val keyName = key.name.replaceAll("([^A-Z_])([A-Z])", "$1_$2").toLowerCase
+    val mapKey = s"${key.vendor}/${keyName}_$version"
     if (!jsonPaths.contains(mapKey)) {
       val rootRepoURL = props.getProperty("jsonpaths")
-      val jsonPath = s"$rootRepoURL/jsonpaths/${key.vendor}/${key.name}_$version.json"
+      val jsonPath = s"$rootRepoURL/jsonpaths/${key.vendor}/${keyName}_$version.json"
       try {
         val arrayNode: ArrayNode = JsonLoader.fromURL(new URL(jsonPath)).get("jsonpaths").asInstanceOf[ArrayNode]
         val fields = scala.collection.mutable.ArrayBuffer[String]()

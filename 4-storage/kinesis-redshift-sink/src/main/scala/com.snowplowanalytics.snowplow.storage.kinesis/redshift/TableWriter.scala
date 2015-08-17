@@ -95,7 +95,7 @@ object TableWriter {
         s"$dbTable"
       case (Some(_vendor), None) =>
         s"${vendor}_$dbTable"
-    }).replaceAllLiterally(".", "_").toLowerCase()
+    }).replaceAllLiterally(".", "_").replaceAll("([^A-Z_])([A-Z])", "$1_$2").toLowerCase
 
     synchronized {
       if (!writers.contains(tableName)) {
@@ -135,7 +135,7 @@ class TableWriter(dataSource:DataSource, table: String) {
   // 93 timestamp
   // -7 bit
   // 12 varchar
-  var converters: Map[Int, SQLApplier] =
+  val converters: Map[Int, SQLApplier] =
     Map(1 -> SQLConverters.setString,
       2 -> SQLConverters.setDecimal,
       4 -> SQLConverters.setInteger,
