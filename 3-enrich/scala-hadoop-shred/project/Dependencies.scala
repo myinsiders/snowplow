@@ -20,7 +20,10 @@ object Dependencies {
     "Snowplow Analytics Maven repo" at "http://maven.snplow.com/releases/",
     "Snowplow Analytics Maven snapshot repo" at "http://maven.snplow.com/snapshots/",
     // For user-agent-utils
-    "user-agent-utils repo" at "https://raw.github.com/HaraldWalker/user-agent-utils/mvn-repo/"
+    "user-agent-utils repo" at "https://raw.github.com/HaraldWalker/user-agent-utils/mvn-repo/",
+    // For ua-parser
+    "clojars" at "http://clojars.org/repo"
+
   )
 
   object V {
