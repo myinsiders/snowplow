@@ -2,3 +2,13 @@
 
 # Vagrant
 .vagrant/
+
+target/
+
+### JetBrains template
+
+.idea/
+/out/
+
+# mpeltonen/sbt-idea plugin
+.idea_modules/

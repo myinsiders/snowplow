@@ -1,12 +1,13 @@
 package com.snowplowanalytics.snowplow.storage.kinesis.redshift
 
-import java.sql.{Types, Timestamp, PreparedStatement, SQLException, BatchUpdateException}
+import java.sql.{BatchUpdateException, PreparedStatement, SQLException, Timestamp, Types}
 import java.util.Properties
 import javax.sql.DataSource
 
 import org.apache.commons.logging.LogFactory
-import org.postgresql.ds.PGPoolingDataSource
+
 import scala.language.implicitConversions
+import scala.util.Try
 
 object SQLConverters {
   val log = LogFactory.getLog(classOf[TableWriter])
@@ -24,8 +25,21 @@ object SQLConverters {
 
   def setString(value: String, stat: PreparedStatement, index: Int) =
     stat.setString(index, value)
-  def setTimestamp(value: String, stat: PreparedStatement, index: Int) =
-    stat.setTimestamp(index, if (value == null) null else Timestamp.valueOf(value))
+  def setTimestamp(value: String, stat: PreparedStatement, index: Int) = {
+    val timestamp: Timestamp = if (value == null) {
+      null
+    }
+    else {
+      Try(
+        Timestamp.valueOf(value)
+      )
+      .getOrElse{
+        import java.time.Instant
+        Timestamp.from(Instant.ofEpochMilli(value.toLong))
+      }
+    }
+    stat.setTimestamp(index, timestamp)
+  }
   def setBoolean(value: String, stat: PreparedStatement, index: Int) =
     if (value == null) stat.setNull(index, Types.BOOLEAN) else stat.setBoolean(index, value.rsBoolean)
   def setInteger(value: String, stat: PreparedStatement, index: Int) =
