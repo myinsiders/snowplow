@@ -8,6 +8,7 @@ target/
 ### JetBrains template
 
 .idea/
+*.iml
 /out/
 
 # mpeltonen/sbt-idea plugin
